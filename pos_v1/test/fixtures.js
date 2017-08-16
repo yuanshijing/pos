@@ -1,4 +1,5 @@
 'use strict';
+module.exports = { loadAllItems, loadPromotions }
 
 function loadAllItems() {
   return [

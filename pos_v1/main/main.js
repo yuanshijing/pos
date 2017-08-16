@@ -5,11 +5,10 @@ const loadPromotions = info.loadPromotions();
 
 //一：整合条码，统计数量
 function calculateCount(tags) {
-    let tagList = [];
+    let tagList = {};
     tags.map(function (value) {
         if (value.indexOf('-') === -1) {
             if (!tagList[value]) {
-                //console.log(tagList[value]);
                 tagList[value] = {};
                 tagList[value].count = 1;
             } else {
@@ -33,14 +32,14 @@ function calculateCount(tags) {
 //let T1 = calculateCount(tags)
 //console.log(T1);
 
-//二：生成新的购物清单
-function makeNewlist(detailList) {
-    let allItem = loadAllItems();
-    for (let term of detailList) {
-        for (let item of allItem) {
+//二：生成有整合过、有详细信息的清单
+function makeNewList(detailList) {
+    for (let term in detailList) {
+        //console.log(term)
+        for (let item of loadAllItems) {
             if (item.barcode === term) {
-                term.item = item;
-                term.total = term.count * term.item.price;
+                detailList[term].item = item;
+                detailList[term].total = detailList[term].count * item.price;
                 break;
             }
         }
@@ -48,63 +47,61 @@ function makeNewlist(detailList) {
     //console.log(detailList);
     return detailList;
 }
-makeNewList(calculateCount(tags));
 
-//三：匹配促销商品，增加save属性，更新总计；
-let list = makeNewList(calculateCount(tags));
-function promotion(list, loadPromotions) {
-    for (let i of loadPromotions) {
-        if (i[typpe] = 'BUY_TWO_GET_ONE_FREE') {
+//三：匹配促销商品，增加save属性，更新total；
+function promotion(list, type) {
+    switch(type){
+        case 'BUY_TWO_GET_ONE_FREE':
             let save = list.item.price * Math.floor(list.count / 3);
-            list.save = save.toFixed(2);
+            list.save = save;
             let total = list.total - list.save;
-            list.total = total.toFixed(2);
-        }
+            list.total = total;
     }
+    //console.log(list);
     return list;
 }
 
-//四：更新数组信息
+//四：加上促销商品的save、total信息
 function listWithDiscount(list) {
     let result = [];
-    let Promotions = loadPromotions();
-    for(let item of promotion){
-        for(let key of list) {
-            if(item.barcode.includes(key.item.barcode)){
-                result.push(promotion(key.item.type))
+    for(let item of loadPromotions){
+        for(let key in list) {
+            if(item.barcodes.includes(list[key].item.barcode)){
+                result.push(promotion(list[key],item.type))
             }else{
-                result.push(key);
+                result.push(list[key]);
             }
         }
     }
     //console.log(result)
     return result;
 }
-//建立清单
+//五、建立清单
 function buildList(discountGoods){
     let str = `***<没钱赚商店>收据***
-    `;
+`;
     let sum = 0;
     let save = 0;
-    for (let good of dicountGoods){
+    for (let good of discountGoods){
         if(good.save){
             save += good.save;
-        }str += `名称:${good.item.name}，数量：${good.count}${good.item.unit}，单价：${good.item.price}(元)，小计：${good.total}(元)
-        `;
+        }str += `名称：${good.item.name}，数量：${good.count}${good.item.unit}，单价：${good.item.price.toFixed(2)}(元)，小计：${good.total.toFixed(2)}(元)
+`;
         sum += good.total;
     }
     str += `----------------------
-    总计：${sum.toFixed(2)}(元)
-    节省：${save.toFixed(2)}(元)
-    **********************`;
+总计：${sum.toFixed(2)}(元)
+节省：${save.toFixed(2)}(元)
+**********************`;
     return str;
 }
-//打印结果
-function printList(input){
-    let tagsObjList = calculateCount(input);
-    let goodsList = makeNewlist(tagsObjList);
-    let addDiscount =promotion(goodsList);
-    let newList = listWithDiscount(addDiscount);
+
+function printReceipt(input){
+    let tagList = calculateCount(input);
+    let detailList = makeNewList(tagList);
+    let newList = listWithDiscount(detailList);
     let str = buildList(newList);
+    console.log(str);
 }
-printReceipt(tags);
+
+module.exports = printReceipt;

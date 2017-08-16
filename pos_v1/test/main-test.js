@@ -1,4 +1,5 @@
 'use strict';
+const printReceipt = require('../main/main.js');
 
 describe('pos', () => {
 
